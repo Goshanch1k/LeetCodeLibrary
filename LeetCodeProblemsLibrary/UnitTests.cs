@@ -5,6 +5,31 @@ namespace LeetCodeProblemsLibrary
 {
     public class UnitTests
     {
+        [Theory]
+        [InlineData(new[] { 2, 7, 11, 15 }, 9, new[] { 0, 1 })]
+        [InlineData(new[] { 3, 2, 4 }, 6, new[] { 1, 2 })]
+        [InlineData(new[] { 3, 3 }, 6, new[] { 0, 1 })]
+        public void TwoSum1_Test(int[] nums, int target, int[] expected)
+        {
+            // Arrange & Act
+            var result = TwoSum1.TwoSum(nums, target);
+
+            // Assert
+            Assert.Equal(expected, result);
+        }
+
+        [Theory(Skip = "Not solved")]
+        [InlineData(new[] { 1, 0, 2, 3, 0, 4, 5, 0 }, new[] { 0, 1, 4, 9, 16, 25 })]
+        [InlineData(new[] { 1, 2, 3 }, new[] { 1, 4, 9 })]
+        public void SortedSquares997_Test(int[] nums, int[] expected)
+        {
+            // Arrange & Act
+            var result = SortedSquares997.SortedSquares(nums);
+
+            // Assert
+            Assert.Equal(expected, result);
+        }
+        
         [Theory(Skip = "Not solved")]
         [InlineData(new[] { 1, 0, 2, 3, 0, 4, 5, 0 }, new[] { 1, 0, 0, 2, 3, 0, 0, 4 })]
         [InlineData(new[] { 1, 2, 3 }, new[] { 1, 2, 3 })]
@@ -19,18 +44,6 @@ namespace LeetCodeProblemsLibrary
 
             // Assert
             Assert.Equal(expected, array);
-        }
-
-        [Theory(Skip = "Not solved")]
-        [InlineData(new[] { 1, 0, 2, 3, 0, 4, 5, 0 }, new[] { 0, 1, 4, 9, 16, 25 })]
-        [InlineData(new[] { 1, 2, 3 }, new[] { 1, 4, 9 })]
-        public void SortedSquares997_Test(int[] nums, int[] expected)
-        {
-            // Arrange & Act
-            var result = SortedSquares997.SortedSquares(nums);
-
-            // Assert
-            Assert.Equal(expected, result);
         }
         
         [Theory]
