@@ -12,19 +12,13 @@ public static class MinOperations3542 {
         foreach (int num in nums)
         {
             while (stack.Count > 0 && stack.Peek() > num)
-            {
                 stack.Pop();
-            }
 
             if (num == 0)
-            {
                 continue;
-            }
 
             if (stack.Count != 0 && stack.Peek() >= num)
-            {
                 continue;
-            }
 
             operationsCount++;
             stack.Push(num);
