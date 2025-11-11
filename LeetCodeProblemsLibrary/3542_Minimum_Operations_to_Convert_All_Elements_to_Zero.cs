@@ -5,24 +5,31 @@ namespace LeetCodeProblemsLibrary;
 public static class MinOperations3542 {
     public static int MinOperations(int[] nums)
     {
-        var stack = new Stack<int>();
-        
-        foreach (var num in nums)
-        {
-            if (num == 0)
-                continue;
+        Stack<int> stack = new Stack<int>();
 
-            if (stack.TryPeek(out var previewsNum) && previewsNum < num)
+        int operationsCount = 0;
+
+        foreach (int num in nums)
+        {
+            while (stack.Count > 0 && stack.Peek() > num)
             {
                 stack.Pop();
-                stack.Push(num);
             }
-            else
-                stack.Push(num);
-            
-            
+
+            if (num == 0)
+            {
+                continue;
+            }
+
+            if (stack.Count != 0 && stack.Peek() >= num)
+            {
+                continue;
+            }
+
+            operationsCount++;
+            stack.Push(num);
         }
-        
-        return 0;
+
+        return operationsCount;
     }
 }

@@ -33,7 +33,7 @@ namespace LeetCodeProblemsLibrary
             Assert.Equal(expected, result);
         }
         
-        [Theory(Skip = "Not solved")]
+        [Theory]
         [InlineData(new[] { 0, 2 }, 1)]
         [InlineData(new[] { 3, 1, 2, 1 }, 3)]
         [InlineData(new[] { 1, 2, 1, 2, 1, 2 }, 4)]
