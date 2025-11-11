@@ -37,7 +37,7 @@ namespace LeetCodeProblemsLibrary
         [InlineData(new[] { 0, 2 }, 1)]
         [InlineData(new[] { 3, 1, 2, 1 }, 3)]
         [InlineData(new[] { 1, 2, 1, 2, 1, 2 }, 4)]
-        public void SquaresOfSortedArray977_Test(int[] nums, int expected)
+        public void MinOperations3542_Test(int[] nums, int expected)
         {
             // Arrange & Act
             var result = MinOperations3542.MinOperations(nums);
