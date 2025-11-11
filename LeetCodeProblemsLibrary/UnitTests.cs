@@ -17,7 +17,19 @@ namespace LeetCodeProblemsLibrary
             // Assert
             Assert.Equal(expected, result);
         }
+        
+        [Theory]
+        [InlineData(new[] { "10", "0001", "111001", "1", "0" }, 5, 3, 4)]
+        [InlineData(new[] { "10", "0", "1" }, 1, 1, 2)]
+        public void FindMaxForm474_Test(string[] strs, int m, int n, int expected)
+        {
+            // Arrange & Act
+            var result = FindMaxForm474.FindMaxForm(strs, m, n);
 
+            // Assert
+            Assert.Equal(expected, result);
+        }
+        
         [Theory(Skip = "Not solved")]
         [InlineData(new[] { 1, 0, 2, 3, 0, 4, 5, 0 }, new[] { 0, 1, 4, 9, 16, 25 })]
         [InlineData(new[] { 1, 2, 3 }, new[] { 1, 4, 9 })]
