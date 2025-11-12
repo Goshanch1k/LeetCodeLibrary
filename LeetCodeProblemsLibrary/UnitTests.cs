@@ -62,6 +62,24 @@ namespace LeetCodeProblemsLibrary
         }
         
         [Theory]
+        [LeetCodeTags("Array", "Sliding-Window", "Segment-Tree")]
+        [InlineData(new[] { 2, 6, 3, 1 }, 3)]
+        [InlineData(new[] { 2, 1, 1, 1 }, 1)]
+        [InlineData(new[] { 2, 6, 1, 4 }, 3)]
+        [InlineData(new[] { 2, 6, 3, 4 }, 4)]
+        [InlineData(new[] { 2, 10, 6, 14 }, -1)]
+        [InlineData(new[] { 6, 10, 15 }, 4)]
+        [InlineData(new[] { 48841, 93382, 993143, 170438, 48860, 174356, 291531 }, 7)]
+        public void MinOperations2654_Test(int[] nums, int expected)
+        {
+            // Arrange & Act
+            var result = MinOperations2654.MinOperations(nums);
+
+            // Assert
+            Assert.Equal(expected, result);
+        }
+        
+        [Theory]
         [LeetCodeTags("Stack", "Monotonic-Stack", "Greedy")]
         [InlineData(new[] { 0, 2 }, 1)]
         [InlineData(new[] { 3, 1, 2, 1 }, 3)]
