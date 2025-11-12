@@ -1,8 +1,11 @@
 using System;
+using LeetCodeProblemsLibrary.Attributes;
 
 namespace LeetCodeProblemsLibrary;
 
 public static class FindMaxForm474 {
+    [TimeComplexity("O(m * n * strs.length)")]
+    [SpaceComplexity("O(m * n)")]
     public static int FindMaxForm(string[] strs, int m, int n) {
         int[][] memory = new int[m + 1][];
 		

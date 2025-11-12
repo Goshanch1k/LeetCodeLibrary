@@ -1,11 +1,13 @@
 using Xunit;
 using System.Linq;
+using LeetCodeProblemsLibrary.Attributes;
 
 namespace LeetCodeProblemsLibrary
 {
     public class UnitTests
     {
         [Theory]
+        [LeetCodeTags("Array", "Hash Table", "Two Pointers", "Prefix Sum")]
         [InlineData(new[] { 2, 7, 11, 15 }, 9, new[] { 0, 1 })]
         [InlineData(new[] { 3, 2, 4 }, 6, new[] { 1, 2 })]
         [InlineData(new[] { 3, 3 }, 6, new[] { 0, 1 })]
@@ -19,6 +21,7 @@ namespace LeetCodeProblemsLibrary
         }
         
         [Theory]
+        [LeetCodeTags("Dynamic Programming", "Knapsack 01")]
         [InlineData(new[] { "10", "0001", "111001", "1", "0" }, 5, 3, 4)]
         [InlineData(new[] { "10", "0", "1" }, 1, 1, 2)]
         public void FindMaxForm474_Test(string[] strs, int m, int n, int expected)
@@ -59,6 +62,7 @@ namespace LeetCodeProblemsLibrary
         }
         
         [Theory]
+        [LeetCodeTags("Stack", "Monotonic-Stack", "Greedy")]
         [InlineData(new[] { 0, 2 }, 1)]
         [InlineData(new[] { 3, 1, 2, 1 }, 3)]
         [InlineData(new[] { 1, 2, 1, 2, 1, 2 }, 4)]

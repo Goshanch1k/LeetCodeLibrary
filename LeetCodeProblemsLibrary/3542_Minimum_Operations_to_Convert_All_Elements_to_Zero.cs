@@ -1,8 +1,11 @@
 using System.Collections.Generic;
+using LeetCodeProblemsLibrary.Attributes;
 
 namespace LeetCodeProblemsLibrary;
 
 public static class MinOperations3542 {
+    [TimeComplexity("O(n)")]
+    [SpaceComplexity("O(n)")]
     public static int MinOperations(int[] nums)
     {
         Stack<int> stack = new Stack<int>();
