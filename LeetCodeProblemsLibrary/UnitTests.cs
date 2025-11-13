@@ -79,6 +79,22 @@ public class UnitTests
         // Assert
         Assert.Equal(expected, result);
     }
+    
+    [Theory]
+    [LeetCodeTags("Array", "Prefix-Sum")]
+    [InlineData("010", 1)]
+    [InlineData("00110", 2)]
+    [InlineData("00011001", 2)]
+    [InlineData("1001101", 4)]
+    [InlineData("00111", 0)]
+    public void MaxOperations3228_Test(string s, int expected)
+    {
+        // Arrange & Act
+        var result = MaxOperations3228.MaxOperations(s);
+
+        // Assert
+        Assert.Equal(expected, result);
+    }
 
     [Theory]
     [LeetCodeTags("Stack", "Monotonic-Stack", "Greedy")]
