@@ -19,6 +19,19 @@ public class MediumUnitTests
         Assert.Equal(expected, result);
     }
     
+    [Theory]
+    [LeetCodeTags("String", "Prefix-Sum")]
+    [InlineData("00011", 5)]
+    [InlineData("101101", 16)]
+    public void NumberOfSubstrings3234_Test(string s, int expected)
+    {
+        // Arrange & Act
+        var result = NumberOfSubstrings3234.NumberOfSubstrings(s);
+
+        // Assert
+        Assert.Equal(expected, result);
+    }
+    
     public static IEnumerable<object[]> TestData2536()
     {
         yield return
