@@ -1,6 +1,10 @@
+using LeetCodeProblemsLibrary.Attributes;
+
 namespace LeetCodeProblemsLibrary.Medium;
 
 public static class NumSub1513 {
+    [TimeComplexity("O(n)")]
+    [SpaceComplexity("O(1)")]
     public static int NumSub(string s) {
         double result = 0;
         const int massiveNumber = 1000000007;
