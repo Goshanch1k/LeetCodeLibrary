@@ -25,7 +25,26 @@ public class EasyUnitTests
         // Assert
         Assert.Equal(expected, result);
     }
-    
+
+    [Theory]
+    [LeetCodeTags("Array")]
+    [InlineData(new[] { 1, 0 }, false)]
+    [InlineData(new[] { 1, 0, 0 }, true)]
+    [InlineData(new[] { 1, 1, 1, 0 }, false)]
+    [InlineData(new[] { 1, 1, 1, 1, 0 }, true)]
+    [InlineData(new[] { 1, 1, 1, 1, 1, 0 }, false)]
+    public void IsOneBitCharacter717_Test(int[] input, bool expected)
+    {
+        // Arrange & Act
+        var array = input.ToArray();
+
+        // Act
+        var result = IsOneBitCharacter717.IsOneBitCharacter(array);
+
+        // Assert
+        Assert.Equal(expected, result);
+    }
+
     [Theory]
     [LeetCodeTags("Array")]
     [InlineData(new[] { 1,0,0,0,1,0,0,1 }, 2, true)]
