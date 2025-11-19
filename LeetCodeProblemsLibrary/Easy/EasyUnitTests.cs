@@ -60,7 +60,20 @@ public class EasyUnitTests
         // Assert
         Assert.Equal(expected, result);
     }
-    
+
+    [Theory]
+    [LeetCodeTags("Array")]
+    [InlineData(new[] { 5, 3, 6, 1, 12 }, 3, 24)]
+    [InlineData(new[] { 2, 7, 9 }, 4, 4)]
+    public void FindFinalValue2154_Test(int[] nums, int original, int expected)
+    {
+        // Arrange & Act
+        var result = FindFinalValue2154.FindFinalValue(nums, original);
+
+        // Assert
+        Assert.Equal(expected, result);
+    }
+
     [Theory]
     [LeetCodeTags("Math")]
     [InlineData(2, 4, 2)]
