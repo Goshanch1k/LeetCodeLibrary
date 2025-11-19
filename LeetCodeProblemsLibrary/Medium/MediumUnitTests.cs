@@ -7,6 +7,20 @@ namespace LeetCodeProblemsLibrary.Medium;
 public class MediumUnitTests
 {
     [Theory]
+    [LeetCodeTags("Array")]
+    [InlineData(new[] { 7, 1, 5, 3, 6, 4 }, 7)]
+    [InlineData(new[] { 1, 2, 3, 4, 5 }, 4)]
+    [InlineData(new[] { 7, 6, 4, 3, 1 }, 0)]
+    public static void MaxProfit122_Test(int[] prices, int expected)
+    {
+        // Arrange & Act
+        var result = MaxProfit122.MaxProfit(prices);
+        
+        // Assert
+        Assert.Equal(expected, result);
+    }
+    
+    [Theory]
     [LeetCodeTags("String", "Prefix-Sum")]
     [InlineData("0110111", 9)]
     [InlineData("111111", 21)]
