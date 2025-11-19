@@ -60,4 +60,19 @@ public class EasyUnitTests
         // Assert
         Assert.Equal(expected, result);
     }
+    
+    [Theory]
+    [LeetCodeTags("Math")]
+    [InlineData(2, 4, 2)]
+    [InlineData(3, 1, 3)]
+    [InlineData(3, 2, 3)]
+    [InlineData(10, 10, 1)]
+    public void CountOperations2169_Test(int num1, int num2, int expected)
+    {
+        // Arrange & Act
+        var result = CountOperations2169.CountOperations(num1, num2);
+
+        // Assert
+        Assert.Equal(expected, result);
+    }
 }
