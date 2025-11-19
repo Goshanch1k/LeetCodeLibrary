@@ -358,8 +358,28 @@ internal static class Program
 
     private static async Task SaveStats(LeetCodeStats stats)
     {
-        var json = JsonConvert.SerializeObject(stats, Formatting.Indented);
-        await File.WriteAllTextAsync("stats.json", json);
+        try
+        {
+            var json = JsonConvert.SerializeObject(stats, Formatting.Indented);
+            await File.WriteAllTextAsync("stats.json", json);
+            Console.WriteLine("✅ stats.json успешно сохранен");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Ошибка при сохранении stats.json: {ex.Message}");
+            // Создаем базовый файл если возникла ошибка
+            var basicStats = new { 
+                total_solved = stats.TotalSolved,
+                easy_solved = stats.EasySolved, 
+                medium_solved = stats.MediumSolved,
+                hard_solved = stats.HardSolved,
+                acceptance_rate = stats.AcceptanceRate,
+                ranking = stats.Ranking,
+                updated_at = stats.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ss")
+            };
+            var basicJson = JsonConvert.SerializeObject(basicStats, Formatting.Indented);
+            await File.WriteAllTextAsync("stats.json", basicJson);
+        }
     }
 
     private static async Task UpdateReadme(LeetCodeStats stats, ProblemCounts problemCounts)

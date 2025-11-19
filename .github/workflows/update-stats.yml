@@ -12,25 +12,36 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: 8.0
-        
-    - name: Build and run stats updater
-      run: |
-        dotnet build scripts/UpdateStats/UpdateStats.csproj -c Release
-        dotnet run --project scripts/UpdateStats/UpdateStats.csproj
-      
-    - name: Commit and push if changed
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add stats.json README.md
-        git diff --staged --quiet || git commit -m "🤖 Auto-update LeetCode stats"
-        git push
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 8.0
+
+      - name: Create stats.json if not exists
+        run: |
+          if [ ! -f stats.json ]; then
+            echo '{"total_solved": 0, "easy_solved": 0, "medium_solved": 0, "hard_solved": 0}' > stats.json
+          fi
+
+      - name: Build and run stats updater
+        run: |
+          dotnet build scripts/UpdateStats/UpdateStats.csproj -c Release
+          dotnet run --project scripts/UpdateStats/UpdateStats.csproj
+
+      - name: Commit and push if changed
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add stats.json README.md
+          # Проверяем есть ли изменения перед коммитом
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "🤖 Auto-update LeetCode stats"
+            git push
+          fi
