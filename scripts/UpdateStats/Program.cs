@@ -3,39 +3,35 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
 
-namespace UpdateStats;
-
-internal static class Program
+namespace UpdateStats
 {
-    private static readonly HttpClient Client = new();
-    private const string Username = "Durez";
-
-    private static async Task Main()
+    internal static class Program
     {
-        Console.WriteLine("🔄 Получение статистики с LeetCode...");
-            
-        var (stats, problemCounts) = await GetLeetCodeData();
+        private static readonly HttpClient Client = new();
+        private const string Username = "Durez";
 
-        if (stats != null)
+        private static async Task Main()
         {
-            await SaveStats(stats);
-                
-            if (problemCounts != null)
+            Console.WriteLine("🔄 Получение статистики с LeetCode...");
+            
+            var stats = await GetLeetCodeStats();
+
+            if (stats != null)
             {
-                await UpdateReadme(stats, problemCounts);
+                await SaveStats(stats);
+                await UpdateReadme(stats);
 
                 Console.WriteLine("✅ Статистика обновлена!");
                 Console.WriteLine($"📊 Решено задач: {stats.TotalSolved}");
-                Console.WriteLine($"🟢 Легкие: {stats.EasySolved}/{problemCounts.Easy}");
-                Console.WriteLine($"🟡 Средние: {stats.MediumSolved}/{problemCounts.Medium}");
-                Console.WriteLine($"🔴 Сложные: {stats.HardSolved}/{problemCounts.Hard}");
+                Console.WriteLine($"🟢 Легкие: {stats.EasySolved}");
+                Console.WriteLine($"🟡 Средние: {stats.MediumSolved}");
+                Console.WriteLine($"🔴 Сложные: {stats.HardSolved}");
             }
         }
-    }
 
-    private static async Task<(LeetCodeStats? stats, ProblemCounts? problemCounts)> GetLeetCodeData()
-    {
-        const string userQuery = """
+        private static async Task<LeetCodeStats?> GetLeetCodeStats()
+        {
+            const string query = """
 
                                              {
                                                  matchedUser(username: "
@@ -70,178 +66,121 @@ internal static class Program
                                                                                }
                                                                    """;
             
-        const string problemsQuery = """
-
-                                                 {
-                                                     problemsetQuestionList: questionList(categorySlug: "all", limit: 10000) {
-                                                         total: totalNum
-                                                         questions: data {
-                                                             difficulty
-                                                         }
-                                                     }
-                                                 }
-                                     """;
+            var payload = new { query };
+            var jsonPayload = JsonConvert.SerializeObject(payload);
+            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
             
-        Client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+            Client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
             
-        try
-        {
-            var userPayload = new { query = userQuery };
-            var userJsonPayload = JsonConvert.SerializeObject(userPayload);
-            var userContent = new StringContent(userJsonPayload, Encoding.UTF8, "application/json");
-                
-            var userResponse = await Client.PostAsync("https://leetcode.com/graphql", userContent);
-            userResponse.EnsureSuccessStatusCode();
-                
-            var userResponseContent = await userResponse.Content.ReadAsStringAsync();
-            var userData = JObject.Parse(userResponseContent);
-                
-            if (userData["errors"] != null)
+            try
             {
-                Console.WriteLine("Error in user response: " + userData["errors"]);
-                return (null, null);
+                var response = await Client.PostAsync("https://leetcode.com/graphql", content);
+                response.EnsureSuccessStatusCode();
+                
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var data = JObject.Parse(responseContent);
+
+                if (data["errors"] == null) 
+                    return ParseStats(data);
+                
+                Console.WriteLine("Error in response: " + data["errors"]);
+                return null;
+
             }
-                
-            var problemsPayload = new { query = problemsQuery };
-            var problemsJsonPayload = JsonConvert.SerializeObject(problemsPayload);
-            var problemsContent = new StringContent(problemsJsonPayload, Encoding.UTF8, "application/json");
-                
-            var problemsResponse = await Client.PostAsync("https://leetcode.com/graphql", problemsContent);
-            problemsResponse.EnsureSuccessStatusCode();
-                
-            var problemsResponseContent = await problemsResponse.Content.ReadAsStringAsync();
-            var problemsData = JObject.Parse(problemsResponseContent);
-                
-            if (problemsData["errors"] != null)
+            catch (Exception ex)
             {
-                Console.WriteLine("Error in problems response: " + problemsData["errors"]);
-                return (null, null);
+                Console.WriteLine($"Error fetching data: {ex.Message}");
+                return null;
             }
-                
-            var stats = ParseStats(userData);
-            var problemCounts = ParseProblemCounts(problemsData);
-                
-            return (stats, problemCounts);
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching data: {ex.Message}");
-            return (null, null);
-        }
-    }
 
-    private static LeetCodeStats? ParseStats(JObject data)
-    {
-        var matchedUser = data["data"]?["matchedUser"];
-        if (matchedUser == null)
-            return null;
-            
-        var submissions = matchedUser["submitStats"]?["acSubmissionNum"];
-        var totalSubmissions = matchedUser["submitStats"]?["totalSubmissionNum"];
-            
-        var stats = new LeetCodeStats
+        private static LeetCodeStats? ParseStats(JObject data)
         {
-            UpdatedAt = DateTime.Now
-        };
-
-        if (submissions != null)
-            foreach (var submission in submissions)
+            var matchedUser = data["data"]?["matchedUser"];
+            if (matchedUser == null) 
+                return null;
+            
+            var submissions = matchedUser["submitStats"]?["acSubmissionNum"];
+            var totalSubmissions = matchedUser["submitStats"]?["totalSubmissionNum"];
+            
+            var stats = new LeetCodeStats
             {
-                var difficulty = submission["difficulty"]?.ToString().ToLower();
-                var count = submission["count"]?.Value<int>() ?? 0;
+                UpdatedAt = DateTime.Now
+            };
 
-                switch (difficulty)
+            if (submissions != null)
+                foreach (var submission in submissions)
                 {
-                    case "all": stats.TotalSolved = count; break;
-                    case "easy": stats.EasySolved = count; break;
-                    case "medium": stats.MediumSolved = count; break;
-                    case "hard": stats.HardSolved = count; break;
+                    var difficulty = submission["difficulty"]?.ToString().ToLower();
+                    var count = submission["count"]?.Value<int>() ?? 0;
+
+                    switch (difficulty)
+                    {
+                        case "all": stats.TotalSolved = count; break;
+                        case "easy": stats.EasySolved = count; break;
+                        case "medium": stats.MediumSolved = count; break;
+                        case "hard": stats.HardSolved = count; break;
+                    }
                 }
-            }
 
-        var totalAccepted = stats.TotalSolved;
-        var totalAttempts = 0;
+            var totalAccepted = stats.TotalSolved;
+            var totalAttempts = 0;
 
-        if (totalSubmissions != null) 
-            totalAttempts += totalSubmissions.Sum(submission => submission["count"]?.Value<int>() ?? 0);
+            if (totalSubmissions != null)
+                foreach (var submission in totalSubmissions)
+                    totalAttempts += submission["count"]?.Value<int>() ?? 0;
 
-        stats.AcceptanceRate = totalAttempts > 0 ? $"{(double)totalAccepted / totalAttempts * 100:F1}%" : "0%";
+            stats.AcceptanceRate = totalAttempts > 0 ? 
+                $"{(double)totalAccepted / totalAttempts * 100:F1}%" : "0%";
                 
-        stats.Ranking = matchedUser["profile"]?["ranking"]?.ToString() ?? "N/A";
+            stats.Ranking = matchedUser["profile"]?["ranking"]?.ToString() ?? "N/A";
             
-        var recentSubs = data["data"]?["recentSubmissionList"];
-        if (recentSubs == null)
-            return stats;
+            var recentSubs = data["data"]?["recentSubmissionList"];
+            if (recentSubs == null) 
+                return stats;
             
-        foreach (var sub in recentSubs)
-        {
-            if (sub["statusDisplay"]?.ToString() != "Accepted")
-                continue;
-
-            var titleSlug = sub["titleSlug"]?.ToString();
-            if (titleSlug != null)
+            foreach (var sub in recentSubs)
             {
-                var metadata = GetSolutionMetadata(titleSlug);
-                        
-                stats.RecentSolutions.Add(new RecentSolution
+                if (sub["statusDisplay"]?.ToString() != "Accepted")
+                    continue;
+                
+                var titleSlug = sub["titleSlug"]?.ToString();
+                if (titleSlug != null)
                 {
-                    Title = sub["title"]?.ToString(),
-                    TitleSlug = titleSlug,
-                    GithubPath = metadata.GithubPath,
-                    Tags = metadata.Tags,
-                    TimeComplexity = metadata.TimeComplexity,
-                    MemoryComplexity = metadata.MemoryComplexity
-                });
+                    var metadata = GetSolutionMetadata(titleSlug);
+                        
+                    stats.RecentSolutions.Add(new RecentSolution
+                    {
+                        Title = sub["title"]?.ToString() ?? string.Empty,
+                        TitleSlug = titleSlug,
+                        GithubPath = metadata.GithubPath,
+                        Tags = metadata.Tags,
+                        TimeComplexity = metadata.TimeComplexity,
+                        MemoryComplexity = metadata.MemoryComplexity
+                    });
+                }
+
+                if (stats.RecentSolutions.Count >= 5) break;
             }
 
-            if (stats.RecentSolutions.Count >= 5) break;
+            return stats;
         }
 
-        return stats;
-    }
-
-    private static ProblemCounts ParseProblemCounts(JObject data)
-    {
-        var questions = data["data"]?["problemsetQuestionList"]?["questions"];
-        if (questions == null) return new ProblemCounts { Easy = 200, Medium = 150, Hard = 100, Total = 450 };
-            
-        int easy = 0, medium = 0, hard = 0;
-            
-        foreach (var question in questions)
+        private static SolutionMetadata GetSolutionMetadata(string titleSlug)
         {
-            var difficulty = question["difficulty"]?.ToString().ToLower();
-            switch (difficulty)
+            if (string.IsNullOrEmpty(titleSlug))
+                return new SolutionMetadata();
+            
+            var metadata = new SolutionMetadata();
+            var directories = new[] { "src/Easy", "src/Medium", "src/Hard" };
+            
+            foreach (var dir in directories)
             {
-                case "easy": easy++; break;
-                case "medium": medium++; break;
-                case "hard": hard++; break;
-            }
-        }
-            
-        return new ProblemCounts
-        {
-            Easy = easy,
-            Medium = medium,
-            Hard = hard,
-            Total = easy + medium + hard
-        };
-    }
-
-    private static SolutionMetadata GetSolutionMetadata(string titleSlug)
-    {
-        if (string.IsNullOrEmpty(titleSlug))
-            return new SolutionMetadata();
-            
-        var metadata = new SolutionMetadata();
-        var directories = new[] { "src/Easy", "src/Medium", "src/Hard" };
-            
-        foreach (var dir in directories)
-        {
-            if (!Directory.Exists(dir))
-                continue;
+                if (!Directory.Exists(dir))
+                    continue;
                     
-            var solutionDir = FindSolutionDirectory(dir, titleSlug);
-            {
+                var solutionDir = FindSolutionDirectory(dir, titleSlug);
+                
                 metadata.GithubPath = $"[📁](./{solutionDir})";
 
                 if (solutionDir != null)
@@ -254,251 +193,225 @@ internal static class Program
 
                 break;
             }
-        }
             
-        return metadata;
-    }
+            return metadata;
+        }
 
-    private static string? FindSolutionDirectory(string baseDir, string titleSlug)
-    {
-        try
+        private static string? FindSolutionDirectory(string baseDir, string titleSlug)
         {
-            var directories = Directory.GetDirectories(baseDir);
-            foreach (var dir in directories)
+            try
             {
-                var dirName = Path.GetFileName(dir).ToLower();
-                if (dirName.Contains(titleSlug, StringComparison.CurrentCultureIgnoreCase) || 
-                    dirName.Replace("-", "").Contains(titleSlug.ToLower().Replace("-", "")))
+                var directories = Directory.GetDirectories(baseDir);
+                foreach (var dir in directories)
                 {
-                    return dir.Replace("\\", "/");
+                    var dirName = Path.GetFileName(dir).ToLower();
+                    
+                    if (dirName.Contains(titleSlug, StringComparison.CurrentCultureIgnoreCase) || 
+                        dirName.Replace("-", "").Contains(titleSlug.ToLower().Replace("-", "")))
+                        return dir.Replace("\\", "/");
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error searching directory {baseDir}: {ex.Message}");
-        }
-            
-        return null;
-    }
-
-    private static SolutionMetadata ExtractMetadataFromFiles(string directoryPath)
-    {
-        var metadata = new SolutionMetadata();
-            
-        try
-        {
-            // Ищем файлы с метаданными
-            var files = Directory.GetFiles(directoryPath, "*.cs");
-                
-            foreach (var file in files)
+            catch (Exception ex)
             {
-                var content = File.ReadAllText(file);
-                    
-                // Ищем теги в комментариях или атрибутах
-                var tagsMatch = Regex.Match(content, @"(?i)(tags?|LeetCodeTags)[\s:=]+\[([^\]]+)\]");
-                if (tagsMatch.Success)
-                    metadata.Tags = tagsMatch.Groups[2].Value.Trim();
-                    
-                var timeMatch = Regex.Match(content, @"(?i)(TimeComplexity|Time)[\s:=]+[""']?([^""'\s]+)");
-                if (timeMatch.Success)
-                    metadata.TimeComplexity = timeMatch.Groups[2].Value.Trim();
-                    
-                var memoryMatch = Regex.Match(content, @"(?i)(MemoryComplexity|Memory|Space)[\s:=]+[""']?([^""'\s]+)");
-                if (memoryMatch.Success)
-                    metadata.MemoryComplexity = memoryMatch.Groups[2].Value.Trim();
-                    
-                if (!string.IsNullOrEmpty(metadata.Tags) && 
-                    !string.IsNullOrEmpty(metadata.TimeComplexity) && 
-                    !string.IsNullOrEmpty(metadata.MemoryComplexity))
-                    break;
+                Console.WriteLine($"Error searching directory {baseDir}: {ex.Message}");
             }
-                
-            var readmePath = Path.Combine(directoryPath, "README.md");
-            if (File.Exists(readmePath))
+            
+            return null;
+        }
+
+        private static SolutionMetadata ExtractMetadataFromFiles(string directoryPath)
+        {
+            var metadata = new SolutionMetadata();
+            
+            try
             {
-                var readmeContent = File.ReadAllText(readmePath);
-                    
-                if (string.IsNullOrEmpty(metadata.Tags))
+                var files = Directory.GetFiles(directoryPath, "*.cs");
+                
+                foreach (var file in files)
                 {
-                    var tagsMatch = Regex.Match(readmeContent, @"(?i)tags?[\s:]+([^\n]+)");
+                    var content = File.ReadAllText(file);
+                    
+                    var tagsMatch = Regex.Match(content, @"(?i)(tags?|LeetCodeTags)[\s:=]+\[([^\]]+)\]");
                     if (tagsMatch.Success)
-                        metadata.Tags = tagsMatch.Groups[1].Value.Trim();
-                }
+                        metadata.Tags = tagsMatch.Groups[2].Value.Trim();
                     
-                if (string.IsNullOrEmpty(metadata.TimeComplexity))
-                {
-                    var timeMatch = Regex.Match(readmeContent, @"(?i)time[\s-]*complexity[\s:]+([^\n]+)");
-                    if (timeMatch.Success) 
-                        metadata.TimeComplexity = timeMatch.Groups[1].Value.Trim();
-                }
+                    var timeMatch = Regex.Match(content, """(?i)(TimeComplexity|Time)[\s:=]+["']?([^"'\s]+)""");
+                    if (timeMatch.Success)
+                        metadata.TimeComplexity = timeMatch.Groups[2].Value.Trim();
                     
-                if (string.IsNullOrEmpty(metadata.MemoryComplexity))
+                    var memoryMatch = Regex.Match(content, """(?i)(MemoryComplexity|Memory|Space)[\s:=]+["']?([^"'\s]+)""");
+                    if (memoryMatch.Success)
+                        metadata.MemoryComplexity = memoryMatch.Groups[2].Value.Trim();
+                    
+                    if (!string.IsNullOrEmpty(metadata.Tags) && 
+                        !string.IsNullOrEmpty(metadata.TimeComplexity) && 
+                        !string.IsNullOrEmpty(metadata.MemoryComplexity))
+                        break;
+                }
+                
+                var readmePath = Path.Combine(directoryPath, "README.md");
+                if (File.Exists(readmePath))
                 {
-                    var memoryMatch = Regex.Match(readmeContent, @"(?i)memory[\s-]*complexity[\s:]+([^\n]+)");
-                    if (memoryMatch.Success) 
-                        metadata.MemoryComplexity = memoryMatch.Groups[1].Value.Trim();
+                    var readmeContent = File.ReadAllText(readmePath);
+                    
+                    if (string.IsNullOrEmpty(metadata.Tags))
+                    {
+                        var tagsMatch = Regex.Match(readmeContent, @"(?i)tags?[\s:]+([^\n]+)");
+                        if (tagsMatch.Success) metadata.Tags = tagsMatch.Groups[1].Value.Trim();
+                    }
+                    
+                    if (string.IsNullOrEmpty(metadata.TimeComplexity))
+                    {
+                        var timeMatch = Regex.Match(readmeContent, @"(?i)time[\s-]*complexity[\s:]+([^\n]+)");
+                        if (timeMatch.Success) metadata.TimeComplexity = timeMatch.Groups[1].Value.Trim();
+                    }
+                    
+                    if (string.IsNullOrEmpty(metadata.MemoryComplexity))
+                    {
+                        var memoryMatch = Regex.Match(readmeContent, @"(?i)memory[\s-]*complexity[\s:]+([^\n]+)");
+                        if (memoryMatch.Success) metadata.MemoryComplexity = memoryMatch.Groups[1].Value.Trim();
+                    }
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error extracting metadata from {directoryPath}: {ex.Message}");
-        }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error extracting metadata from {directoryPath}: {ex.Message}");
+            }
             
-        if (string.IsNullOrEmpty(metadata.Tags)) 
-            metadata.Tags = "—";
-        if (string.IsNullOrEmpty(metadata.TimeComplexity)) 
-            metadata.TimeComplexity = "—";
-        if (string.IsNullOrEmpty(metadata.MemoryComplexity)) 
-            metadata.MemoryComplexity = "—";
+            if (string.IsNullOrEmpty(metadata.Tags)) 
+                metadata.Tags = "—";
+            if (string.IsNullOrEmpty(metadata.TimeComplexity))
+                metadata.TimeComplexity = "—";
+            if (string.IsNullOrEmpty(metadata.MemoryComplexity)) 
+                metadata.MemoryComplexity = "—";
             
-        return metadata;
-    }
+            return metadata;
+        }
 
-    private static async Task SaveStats(LeetCodeStats stats)
-    {
-        try
+        private static async Task SaveStats(LeetCodeStats stats)
         {
-            var json = JsonConvert.SerializeObject(stats, Formatting.Indented);
-            await File.WriteAllTextAsync("stats.json", json);
-            Console.WriteLine("✅ stats.json успешно сохранен");
+            try
+            {
+                var json = JsonConvert.SerializeObject(stats, Formatting.Indented);
+                await File.WriteAllTextAsync("stats.json", json);
+                Console.WriteLine("✅ stats.json успешно сохранен");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Ошибка при сохранении stats.json: {ex.Message}");
+            }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Ошибка при сохранении stats.json: {ex.Message}");
-            // Создаем базовый файл если возникла ошибка
-            var basicStats = new { 
-                total_solved = stats.TotalSolved,
-                easy_solved = stats.EasySolved, 
-                medium_solved = stats.MediumSolved,
-                hard_solved = stats.HardSolved,
-                acceptance_rate = stats.AcceptanceRate,
-                ranking = stats.Ranking,
-                updated_at = stats.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ss")
-            };
-            var basicJson = JsonConvert.SerializeObject(basicStats, Formatting.Indented);
-            await File.WriteAllTextAsync("stats.json", basicJson);
-        }
-    }
 
-    private static async Task UpdateReadme(LeetCodeStats stats, ProblemCounts problemCounts)
-    {
-        const string readmePath = "README.md";
-        var content = await File.ReadAllTextAsync(readmePath);
-            
-        var statsSection = GenerateStatsSection(stats, problemCounts);
-        content = Regex.Replace(
-            content,
-            @"<!-- STATS_SECTION_START -->[\s\S]*?<!-- STATS_SECTION_END -->",
-            statsSection,
-            RegexOptions.Singleline
-        );
-            
-        if (stats.RecentSolutions.Count > 0)
+        private static async Task UpdateReadme(LeetCodeStats stats)
         {
-            var recentMd = "| Leetcode | Github | Использованные теги | Time Complexity | Memory Complexity |\n";
-            recentMd += "|----------|--------|-------------------|-----------------|-------------------|\n";
-                
-            foreach (var sol in stats.RecentSolutions)
-                recentMd += $"| [{sol.Title}](https://leetcode.com/problems/{sol.TitleSlug}/) | {sol.GithubPath} | {sol.Tags} | {sol.TimeComplexity} | {sol.MemoryComplexity} |\n";
-                
+            const string readmePath = "README.md";
+            var content = await File.ReadAllTextAsync(readmePath);
+            
+            var statsSection = GenerateStatsSection(stats);
             content = Regex.Replace(
                 content,
-                @"<!-- RECENT_SOLUTIONS_START -->[\s\S]*?<!-- RECENT_SOLUTIONS_END -->",
-                $"<!-- RECENT_SOLUTIONS_START -->\n{recentMd}\n<!-- RECENT_SOLUTIONS_END -->",
+                @"<!-- STATS_SECTION_START -->[\s\S]*?<!-- STATS_SECTION_END -->",
+                statsSection,
                 RegexOptions.Singleline
             );
+            
+            if (stats.RecentSolutions.Count > 0)
+            {
+                var recentMd = "| Leetcode | Github | Использованные теги | Time Complexity | Memory Complexity |\n";
+                recentMd += "|----------|--------|-------------------|-----------------|-------------------|\n";
+                
+                foreach (var sol in stats.RecentSolutions)
+                    recentMd += $"| [{sol.Title}](https://leetcode.com/problems/{sol.TitleSlug}/) | {sol.GithubPath} | {sol.Tags} | {sol.TimeComplexity} | {sol.MemoryComplexity} |\n";
+                
+                content = Regex.Replace(
+                    content,
+                    @"<!-- RECENT_SOLUTIONS_START -->[\s\S]*?<!-- RECENT_SOLUTIONS_END -->",
+                    $"<!-- RECENT_SOLUTIONS_START -->\n{recentMd}\n<!-- RECENT_SOLUTIONS_END -->",
+                    RegexOptions.Singleline
+                );
+            }
+            
+            content = Regex.Replace(
+                content,
+                """<span id="last-updated">.*</span>""",
+                $"""<span id="last-updated">{stats.UpdatedAt:yyyy-MM-dd HH:mm:ss}</span>"""
+            );
+            
+            await File.WriteAllTextAsync(readmePath, content);
         }
-            
-        content = Regex.Replace(
-            content,
-            """<span id="last-updated">.*</span>""",
-            $"""<span id="last-updated">{stats.UpdatedAt:yyyy-MM-dd HH:mm:ss}</span>"""
-        );
-            
-        await File.WriteAllTextAsync(readmePath, content);
-    }
 
-    private static string GenerateStatsSection(LeetCodeStats stats, ProblemCounts problemCounts)
+        private static string GenerateStatsSection(LeetCodeStats stats)
+        {
+            var easyPercent = CalculateProgressPercent(stats.EasySolved, 1000);
+            var mediumPercent = CalculateProgressPercent(stats.MediumSolved, 1000);
+            var hardPercent = CalculateProgressPercent(stats.HardSolved, 500);
+            var totalPercent = CalculateProgressPercent(stats.TotalSolved, 2500);
+            
+            return $"""
+                    <!-- STATS_SECTION_START -->
+                    <div align="center">
+
+                    ### 🎯 Прогресс решения задач
+
+                    **Всего решено:** `{stats.TotalSolved}` задач
+
+                    | Сложность | Решено | Прогресс |
+                    |-----------|--------|----------|
+                    | 🟢 Легкие | `{stats.EasySolved}` | ![](https://geps.dev/progress/{easyPercent}?width=100&color=22c55e) |
+                    | 🟡 Средние | `{stats.MediumSolved}` | ![](https://geps.dev/progress/{mediumPercent}?width=100&color=eab308) |
+                    | 🔴 Сложные | `{stats.HardSolved}` | ![](https://geps.dev/progress/{hardPercent}?width=100&color=ef4444) |
+
+                    **📈 Общий прогресс:**  
+                    ![](https://geps.dev/progress/{totalPercent}?width=300&color=3b82f6)
+
+                    **🏆 Рейтинг:** `{stats.Ranking}`  
+                    **🎯 Acceptance Rate:** `{stats.AcceptanceRate}`
+
+                    *Статистика обновляется автоматически ежедневно*
+
+                    </div>
+                    <!-- STATS_SECTION_END -->
+                    """;
+        }
+
+        private static int CalculateProgressPercent(int solved, int max)
+        {
+            if (max <= 0)
+                return 0;
+            
+            var percent = (int)((double)solved / max * 100);
+            
+            return Math.Min(Math.Max(percent, 0), 100);
+        }
+    }
+    
+    public class LeetCodeStats
     {
-        var easyPercent = CalculateProgressPercent(stats.EasySolved, problemCounts.Easy);
-        var mediumPercent = CalculateProgressPercent(stats.MediumSolved, problemCounts.Medium);
-        var hardPercent = CalculateProgressPercent(stats.HardSolved, problemCounts.Hard);
-        var totalPercent = CalculateProgressPercent(stats.TotalSolved, problemCounts.Total);
-            
-        return $"""
-                <!-- STATS_SECTION_START -->
-                <div align="center">
-
-                ### 🎯 Прогресс решения задач
-
-                **Всего решено:** `{stats.TotalSolved}` из `{problemCounts.Total}` задач
-
-                | Сложность | Решено | Всего | Прогресс |
-                |-----------|--------|-------|----------|
-                | 🟢 Легкие | `{stats.EasySolved}` | `{problemCounts.Easy}` | ![](https://geps.dev/progress/{easyPercent}?width=100&color=22c55e) |
-                | 🟡 Средние | `{stats.MediumSolved}` | `{problemCounts.Medium}` | ![](https://geps.dev/progress/{mediumPercent}?width=100&color=eab308) |
-                | 🔴 Сложные | `{stats.HardSolved}` | `{problemCounts.Hard}` | ![](https://geps.dev/progress/{hardPercent}?width=100&color=ef4444) |
-
-                **📈 Общий прогресс:**  
-                ![](https://geps.dev/progress/{totalPercent}?width=300&color=3b82f6)  
-                `{stats.TotalSolved}` / `{problemCounts.Total}` задач (`{totalPercent}%`)
-
-                **🏆 Рейтинг:** `{stats.Ranking}`  
-                **🎯 Acceptance Rate:** `{stats.AcceptanceRate}`
-
-                *Статистика обновляется автоматически ежедневно*
-
-                </div>
-                <!-- STATS_SECTION_END -->
-                """;
+        public int TotalSolved { get; set; }
+        public int EasySolved { get; set; }
+        public int MediumSolved { get; set; }
+        public int HardSolved { get; set; }
+        public string AcceptanceRate { get; set; } = "0%";
+        public string Ranking { get; set; } = "N/A";
+        public DateTime UpdatedAt { get; init; }
+        public List<RecentSolution> RecentSolutions { get; } = [];
     }
-
-    private static int CalculateProgressPercent(int solved, int total)
+    
+    public class RecentSolution
     {
-        if (total <= 0) 
-            return 0;
-            
-        var percent = (int)((double)solved / total * 100);
-        return Math.Min(Math.Max(percent, 0), 100);
+        public string Title { get; init; } = string.Empty;
+        public string TitleSlug { get; init; } = string.Empty;
+        public string GithubPath { get; init; } = "—";
+        public string Tags { get; init; } = "—";
+        public string TimeComplexity { get; init; } = "—";
+        public string MemoryComplexity { get; init; } = "—";
     }
-}
     
-public class LeetCodeStats
-{
-    public int TotalSolved { get; set; }
-    public int EasySolved { get; set; }
-    public int MediumSolved { get; set; }
-    public int HardSolved { get; set; }
-    public string AcceptanceRate { get; set; } = "0%";
-    public string Ranking { get; set; } = "N/A";
-    public DateTime UpdatedAt { get; init; }
-    public List<RecentSolution> RecentSolutions { get; } = [];
-}
-    
-public class RecentSolution
-{
-    public string? Title { get; init; } = string.Empty;
-    public string TitleSlug { get; init; } = string.Empty;
-    public string GithubPath { get; init; } = "—";
-    public string Tags { get; init; } = "—";
-    public string TimeComplexity { get; init; } = "—";
-    public string MemoryComplexity { get; init; } = "—";
-}
-    
-public class ProblemCounts
-{
-    public int Easy { get; init; }
-    public int Medium { get; init; }
-    public int Hard { get; init; }
-    public int Total { get; init; }
-}
-    
-public class SolutionMetadata
-{
-    public string GithubPath { get; set; } = "—";
-    public string Tags { get; set; } = "—";
-    public string TimeComplexity { get; set; } = "—";
-    public string MemoryComplexity { get; set; } = "—";
+    public class SolutionMetadata
+    {
+        public string GithubPath { get; set; } = "—";
+        public string Tags { get; set; } = "—";
+        public string TimeComplexity { get; set; } = "—";
+        public string MemoryComplexity { get; set; } = "—";
+    }
 }
