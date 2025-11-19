@@ -1,0 +1,36 @@
+name: Update LeetCode Stats
+
+on:
+  schedule:
+    - cron: '0 12 * * *'  # Daily at 12:00 UTC
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  update-stats:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 8.0
+        
+    - name: Build and run stats updater
+      run: |
+        dotnet build scripts/UpdateStats/UpdateStats.csproj -c Release
+        dotnet run --project scripts/UpdateStats/UpdateStats.csproj
+      
+    - name: Commit and push if changed
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add stats.json README.md
+        git diff --staged --quiet || git commit -m "🤖 Auto-update LeetCode stats"
+        git push
