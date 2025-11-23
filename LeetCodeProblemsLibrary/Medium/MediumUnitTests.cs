@@ -40,6 +40,22 @@ public class MediumUnitTests
 
     [Theory]
     [LeetCodeTags("Array", "Prefix-Sum", "Difference Array")]
+    [InlineData(new[] { 3, 6, 5, 1, 8 }, 18)]
+    [InlineData(new[] { 4 }, 0)]
+    [InlineData(new[] { 1, 2, 3, 4, 4 }, 12)]
+    [InlineData(new[] { 2, 6, 2, 2, 7 }, 15)]
+    [InlineData(new[] { 2, 3, 36, 8, 32, 38, 3, 30, 13, 40 }, 195)]
+    public static void MaxSumDivThree1262_Test(int[] nums, int expected)
+    {
+        // Arrange & Act
+        var result = MaxSumDivThree1262.MaxSumDivThree(nums);
+
+        // Assert
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [LeetCodeTags("Array", "Prefix-Sum", "Difference Array")]
     [InlineData("", 0)]
     [InlineData("a", 0)]
     [InlineData("aa", 0)]
