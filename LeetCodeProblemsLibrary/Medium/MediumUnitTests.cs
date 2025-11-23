@@ -40,6 +40,30 @@ public class MediumUnitTests
 
     [Theory]
     [LeetCodeTags("Array", "Prefix-Sum", "Difference Array")]
+    [InlineData("", 0)]
+    [InlineData("a", 0)]
+    [InlineData("aa", 0)]
+    [InlineData("aaa", 1)]
+    [InlineData("aaaa", 1)]
+    [InlineData("ab", 0)]
+    [InlineData("abc", 0)]
+    [InlineData("abba", 1)]
+    [InlineData("abcba", 3)]
+    [InlineData("abccba", 3)]
+    [InlineData("aabca", 3)]
+    [InlineData("adc", 0)]
+    [InlineData("bbcbaba", 4)]
+    public void CountPalindromicSubsequence1930_Test(string s, int expected)
+    {
+        // Arrange & Act
+        var result = CountPalindromicSubsequence1930.CountPalindromicSubsequence(s);
+
+        // Assert
+        Assert.Equal(expected, result);
+    }
+    
+    [Theory]
+    [LeetCodeTags("Array", "Prefix-Sum", "Difference Array")]
     [MemberData(nameof(TestData2536))]
     public void RangeAddQueries2536_Test(int n, int[][] queries, int[][] expected)
     {
