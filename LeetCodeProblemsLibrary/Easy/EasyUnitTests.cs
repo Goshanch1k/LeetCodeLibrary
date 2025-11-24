@@ -47,6 +47,24 @@ public class EasyUnitTests
 
     [Theory]
     [LeetCodeTags("Array")]
+    [InlineData(new[] { 1, 0 }, new[] { false, false })]
+    [InlineData(new[] { 1, 1, 1, 0 }, new[] { false, false, false, false })]
+    [InlineData(new[] { 0, 1, 1 }, new[] { true, false, false })]
+    [InlineData(new[] { 1, 1, 1 }, new[] { false, false, false })]
+    public void PrefixesDivByFive1018_Test(int[] input, bool[] expected)
+    {
+        // Arrange & Act
+        var array = input.ToArray();
+
+        // Act
+        var result = PrefixesDivByFive1018.PrefixesDivBy5(array);
+
+        // Assert
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [LeetCodeTags("Array")]
     [InlineData(new[] { 1,0,0,0,1,0,0,1 }, 2, true)]
     [InlineData(new[] { 1,0,0,1,0,1 }, 2, false)]
     public void KLengthApart1437_Test(int[] input, int k, bool expected)
