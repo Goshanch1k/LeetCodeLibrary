@@ -15,9 +15,9 @@ public class PrefixesDivByFive1018 {
         
         for (int i = 0; i < nums.Length; i++)
         {
-            currentNumber = (currentNumber << 1) + nums[i];
+            currentNumber = ((currentNumber << 1) + nums[i]) % 5;
             
-            result[i] = currentNumber % 5 == 0;
+            result[i] = currentNumber == 0;
         }
         
         return result;

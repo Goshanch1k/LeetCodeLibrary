@@ -51,6 +51,18 @@ public class EasyUnitTests
     [InlineData(new[] { 1, 1, 1, 0 }, new[] { false, false, false, false })]
     [InlineData(new[] { 0, 1, 1 }, new[] { true, false, false })]
     [InlineData(new[] { 1, 1, 1 }, new[] { false, false, false })]
+    [InlineData(
+        new[]
+        {
+            1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1,
+            1, 1, 0, 0, 1, 0
+        },
+        new[]
+        {
+            false, false, true, false, false, false, false, false, false, false, true, true, true, true, true, true, false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false, true, false, false, true, false, false, true, true,
+            true, true, true, true, true, false, false, true, false, false, false, false, true, true
+        })]
     public void PrefixesDivByFive1018_Test(int[] input, bool[] expected)
     {
         // Arrange & Act
