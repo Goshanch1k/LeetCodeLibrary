@@ -21,6 +21,27 @@ public class MediumUnitTests
     }
     
     [Theory]
+    [LeetCodeTags("Math")]
+    [InlineData(1, 1)]
+    [InlineData(2, -1)]
+    [InlineData(3, 3)]
+    [InlineData(4, -1)]
+    [InlineData(5, -1)]
+    [InlineData(6, -1)]
+    [InlineData(7, 6)]
+    [InlineData(8, -1)]
+    [InlineData(9, 9)]
+    [InlineData(10, -1)]
+    public static void SmallestRepunitDivByK1015_Test(int k, int expected)
+    {
+        // Arrange & Act
+        var result = SmallestRepunitDivByK1015.SmallestRepunitDivByK(k);
+        
+        // Assert
+        Assert.Equal(expected, result);
+    }
+    
+    [Theory]
     [LeetCodeTags("String", "Prefix-Sum")]
     [InlineData("0110111", 9)]
     [InlineData("111111", 21)]

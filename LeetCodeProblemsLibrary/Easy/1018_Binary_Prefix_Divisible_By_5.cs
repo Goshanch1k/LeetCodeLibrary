@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace LeetCodeProblemsLibrary.Easy;
 
-public class PrefixesDivByFive1018 {
+public static class PrefixesDivByFive1018 {
     public static IList<bool> PrefixesDivBy5(int[] nums) {
         return MySolution(nums);
     }
